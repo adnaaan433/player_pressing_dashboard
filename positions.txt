@@ -1,0 +1,24 @@
+Right Centre Back
+Left Centre Midfielder
+Left Centre Back
+Right Attacking Midfielder
+Left Wing Back
+Left Back
+Right Defensive Midfielder
+Centre Back
+Right Wing Back
+None
+Centre Forward
+Left Wing
+Left Attacking Midfielder
+Right Centre Forward
+Left Centre Forward
+Right Midfielder
+Left Defensive Midfielder
+Right Wing
+Right Centre Midfielder
+Centre Attacking Midfielder
+Goalkeeper
+Right Back
+Centre Defensive Midfielder
+Left Midfielder
