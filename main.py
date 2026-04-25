@@ -379,40 +379,24 @@ if page == "Dashboard":
                     fig_scatter.for_each_trace(lambda t: t.update(marker=dict(size=10, opacity=1.0, line=dict(width=2, color='white'))) if t.name == "True" else None)
                     
                     if st.session_state.accumulated_players:
-                        # Extract selected rows and sort by x-axis to alternate shifts for neighboring points
-                        selected_rows = display_df_scatter[display_df_scatter['player_name'].isin(st.session_state.accumulated_players)].sort_values(x_axis)
-                        
-                        # Cycle through different ay (arrow y-offset) to naturally repel overlapping text
-                        # Negative ay places text above the point, positive places it below
-                        shift_cycle = [
-                            dict(ay=-20),
-                            dict(ay=20),
-                            dict(ay=-35),
-                            dict(ay=35)
-                        ]
-                        
-                        for i, (_, clicked_row) in enumerate(selected_rows.iterrows()):
-                            # Use player_known_name if available, else player_name
-                            display_name = clicked_row['player_known_name'] if pd.notna(clicked_row['player_known_name']) else clicked_row['player_name']
-                            
-                            # Format the annotation text
-                            annotation_text = f"{display_name}"
-                            
-                            shifts = shift_cycle[i % len(shift_cycle)]
-                            
-                            fig_scatter.add_annotation(
-                                x=clicked_row[x_axis], y=clicked_row[y_axis],
-                                text=annotation_text,
-                                showarrow=True,
-                                arrowhead=0, # 0 means no arrow head, just a straight line
-                                arrowwidth=1,
-                                arrowcolor="white",
-                                standoff=6, # Start the line slightly outside the marker
-                                ax=0,
-                                ay=shifts['ay'],
-                                align="center",
-                                font=dict(color="white", size=10)
-                            )
+                        for p_name in st.session_state.accumulated_players:
+                            if p_name in display_df_scatter['player_name'].values:
+                                clicked_row = display_df_scatter[display_df_scatter['player_name'] == p_name].iloc[0]
+                                
+                                # Use player_known_name if available, else player_name
+                                display_name = clicked_row['player_known_name'] if pd.notna(clicked_row['player_known_name']) else clicked_row['player_name']
+                                
+                                # Format the annotation text
+                                annotation_text = f"{display_name}"
+                                
+                                fig_scatter.add_annotation(
+                                    x=clicked_row[x_axis], y=clicked_row[y_axis],
+                                    text=annotation_text,
+                                    showarrow=False,
+                                    yshift=15,
+                                    align="center",
+                                    font=dict(color="white", size=10)
+                                )
 
                     # Add median lines
                     fig_scatter.add_vline(x=median_x, line_dash="dash", line_color="rgba(128, 128, 128, 0.8)")
