@@ -387,7 +387,7 @@ if page == "Dashboard":
                                 display_name = clicked_row['player_known_name'] if pd.notna(clicked_row['player_known_name']) else clicked_row['player_name']
                                 
                                 # Format the annotation text
-                                annotation_text = f"<b>{display_name}</b>"
+                                annotation_text = f"{display_name}"
                                 
                                 fig_scatter.add_annotation(
                                     x=clicked_row[x_axis], y=clicked_row[y_axis],
