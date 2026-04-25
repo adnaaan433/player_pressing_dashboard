@@ -376,7 +376,7 @@ if page == "Dashboard":
                         title=f"{scatter_title}<br><sup style='color:gray'>{scatter_subtitle}</sup>"
                     )
                     fig_scatter.update_traces(marker=dict(size=8, opacity=0.6))
-                    fig_scatter.for_each_trace(lambda t: t.update(marker=dict(size=14, opacity=1.0, line=dict(width=2, color='white'))) if t.name == "True" else None)
+                    fig_scatter.for_each_trace(lambda t: t.update(marker=dict(size=10, opacity=1.0, line=dict(width=2, color='white'))) if t.name == "True" else None)
                     
                     if st.session_state.accumulated_players:
                         for p_name in st.session_state.accumulated_players:
@@ -395,7 +395,7 @@ if page == "Dashboard":
                                     showarrow=False,
                                     yshift=15,
                                     align="center",
-                                    font=dict(color="white", size=13)
+                                    font=dict(color="white", size=10)
                                 )
 
                     # Add median lines
