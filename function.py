@@ -139,7 +139,9 @@ def fetch_player_stats(season_id, competition_id, username=None, password=None):
             # Stats
             'defensive_actions_90', 'defensive_action_regains_90', 
             'pressures_90', 'pressure_regains_90', 
-            'counterpressures_90', 'counterpressure_regains_90']]
+            'counterpressures_90', 'counterpressure_regains_90',
+            'pressured_passing_ratio',
+            ]]
     return pdf
 
 def filter_player_stats(pdf, minimum_minutes, position_filter):
