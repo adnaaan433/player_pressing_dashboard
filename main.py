@@ -387,21 +387,15 @@ if page == "Dashboard":
                                 display_name = clicked_row['player_known_name'] if pd.notna(clicked_row['player_known_name']) else clicked_row['player_name']
                                 
                                 # Format the annotation text
-                                val_x = round(clicked_row[x_axis], 2)
-                                val_y = round(clicked_row[y_axis], 2)
-                                annotation_text = f"<b>{display_name}</b><br>{x_axis}: {val_x}<br>{y_axis}: {val_y}"
+                                annotation_text = f"<b>{display_name}</b>"
                                 
                                 fig_scatter.add_annotation(
                                     x=clicked_row[x_axis], y=clicked_row[y_axis],
                                     text=annotation_text,
                                     showarrow=False,
-                                    yshift=45,
-                                    align="left",
-                                    font=dict(color="white", size=13),
-                                    bgcolor="#E452FF",
-                                    bordercolor="white",
-                                    borderwidth=1,
-                                    borderpad=6
+                                    yshift=15,
+                                    align="center",
+                                    font=dict(color="white", size=13)
                                 )
 
                     # Add median lines
