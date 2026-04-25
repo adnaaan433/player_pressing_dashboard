@@ -6,3 +6,4 @@ requests
 highlight-text
 Pillow
 streamlit==1.39.0
+plotly
