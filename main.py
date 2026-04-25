@@ -46,40 +46,41 @@ if "statsbomb" in st.secrets:
 
 
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Dashboard", "League Data Downloader"])
+# page = st.sidebar.radio("Go to", ["Dashboard", "League Data Downloader"])
+page = "Dashboard"
 
-if page == "League Data Downloader":
-    st.title("Download League Data")
-    st.write("Download entire season data for all teams and calculate zonewise stats.")
-    
-    competitions_df = get_competitions()
-    competition_names = competitions_df['competition_name'].unique()
-    selected_league_name = st.selectbox("Select competition", competition_names, index=0, key="dl_comp")
-    
-    seasons_df = competitions_df[competitions_df['competition_name'] == selected_league_name]
-    season_names = seasons_df['season_name'].unique()
-    selected_season_name = st.selectbox("Select season", season_names, index=0, key="dl_seas")
-    
-    selected_row = seasons_df[seasons_df['season_name'] == selected_season_name].iloc[0]
-    competition_id = int(selected_row['competition_id'])
-    season_id = int(selected_row['season_id'])
-    
-    if st.button("Download & Save League Data"):
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-        
-        def update_progress(progress, message):
-            progress_bar.progress(progress)
-            status_text.text(message)
-            
-        df_league = get_event_data(season_id, competition_id, team_name="All Teams", progress_callback=update_progress)
-        status_text.text("Processing zonewise pressing stats...")
-        csv_file = save_league_zonewise_stats(df_league, ".", selected_league_name, selected_season_name)
-        status_text.empty()
-        progress_bar.empty()
-        st.success(f"Successfully saved zonewise stats to {csv_file}")
+# if page == "League Data Downloader":
+#     st.title("Download League Data")
+#     st.write("Download entire season data for all teams and calculate zonewise stats.")
+#     
+#     competitions_df = get_competitions()
+#     competition_names = competitions_df['competition_name'].unique()
+#     selected_league_name = st.selectbox("Select competition", competition_names, index=0, key="dl_comp")
+#     
+#     seasons_df = competitions_df[competitions_df['competition_name'] == selected_league_name]
+#     season_names = seasons_df['season_name'].unique()
+#     selected_season_name = st.selectbox("Select season", season_names, index=0, key="dl_seas")
+#     
+#     selected_row = seasons_df[seasons_df['season_name'] == selected_season_name].iloc[0]
+#     competition_id = int(selected_row['competition_id'])
+#     season_id = int(selected_row['season_id'])
+#     
+#     if st.button("Download & Save League Data"):
+#         progress_bar = st.progress(0)
+#         status_text = st.empty()
+#         
+#         def update_progress(progress, message):
+#             progress_bar.progress(progress)
+#             status_text.text(message)
+#             
+#         df_league = get_event_data(season_id, competition_id, team_name="All Teams", progress_callback=update_progress)
+#         status_text.text("Processing zonewise pressing stats...")
+#         csv_file = save_league_zonewise_stats(df_league, ".", selected_league_name, selected_season_name)
+#         status_text.empty()
+#         progress_bar.empty()
+#         st.success(f"Successfully saved zonewise stats to {csv_file}")
 
-elif page == "Dashboard":
+if page == "Dashboard":
     st.title("Player Pressing Dashboard")
 
     # Initialize session state
@@ -200,7 +201,8 @@ elif page == "Dashboard":
     # --- FILTERS & VISUALIZATION ---
     if st.session_state.data_loaded:
         st.divider()
-        view_mode = st.radio("Select View Mode", ["Player Pressing", "Team Pressing Heatmap"], horizontal=True)
+        # view_mode = st.radio("Select View Mode", ["Player Pressing", "Team Pressing Heatmap"], horizontal=True)
+        view_mode = "Player Pressing"
 
         if view_mode == "Player Pressing":
             st.subheader("Filter Players")
@@ -294,60 +296,60 @@ elif page == "Dashboard":
                 display_df = st.session_state.pdf.sort_values(by='overall_percentile', ascending=False).reset_index(drop=True)
                 st.dataframe(display_df, use_container_width=True)
 
-        elif view_mode == "Team Pressing Heatmap":
-            st.subheader(f"{selected_team_name} Pressing Heatmap")
-            show_numbers = st.toggle('show numbers', value=True)
-
-            # Load custom fonts
-            try:
-                font_bold = font_manager.FontProperties(fname=os.path.abspath('Boldonse-Regular.ttf'))
-                font_regular = font_manager.FontProperties(fname=os.path.abspath('NotoSans_Condensed-Regular.ttf'))
-            except Exception as e:
-                font_bold = None
-                font_regular = None
-
-            league_clean = str(st.session_state.selected_event_league).replace(" ", "_").replace("/", "_")
-            season_clean = str(st.session_state.selected_season).replace(" ", "_").replace("/", "_")
-            league_csv = f"{league_clean}_{season_clean}_zonewise_pressing.csv"
-        
-            if os.path.exists(league_csv):
-                fig = plt.figure(figsize=(10, 11))
-                from matplotlib.gridspec import GridSpec
-                gs = GridSpec(2, 3, figure=fig, height_ratios=[120, 12], width_ratios=[20, 80, 20], hspace=0, wspace=0)
-                ax_left = fig.add_subplot(gs[0, 0])
-                ax_pitch = fig.add_subplot(gs[0, 1])
-                ax_bottom = fig.add_subplot(gs[1, 1])
-                ax_right = fig.add_subplot(gs[0, 2])
-            
-                import matplotlib.lines as mlines
-                team_line = mlines.Line2D([], [], color='#E452FF', marker='o', mfc='white', lw=2, label=selected_team_name)
-                avg_line = mlines.Line2D([], [], color='#808080', marker='o', mfc='white', lw=2, label='League Average')
-                legend_font = font_manager.FontProperties(fname=os.path.abspath('NotoSans_Condensed-Regular.ttf'), size=14) if font_regular else {'size': 20}
-                fig.legend(handles=[team_line, avg_line], loc='lower left', bbox_to_anchor=(0.01, 0.025), prop=legend_font, frameon=False)
-            else:
-                fig, ax_pitch = plt.subplots(figsize=(8, 10))
-                ax_left = None
-                ax_bottom = None
-                ax_right = None
-
-            ftmb_tid = team_pressing_viz(st.session_state.df, selected_team_name, st.session_state.df_teamNameId, ax_pitch, ax_left, ax_bottom, ax_right, league_csv if os.path.exists(league_csv) else None, show_numbers=show_numbers)
-
-            fig.text(0.2, 1.09, f'{selected_team_name} Pressing Heatmap', fontproperties=font_bold, fontsize=18)
-            fig.text(0.2, 1.06, f'Number of Pressing actions per zone of the pitch, in top 5 Leagues {st.session_state.selected_season} season', 
-                    color='#0f0f0f', fontsize=18, ha='left', fontproperties=font_regular)
-            fig.text(0.2, 1.03, f'Data: Statsbomb | Made by: @adnaaan433 | Design: @gusfop', 
-                    color='#0f0f0f', fontsize=18, ha='left', fontproperties=font_regular)
-
-            if ftmb_tid:
-                try:
-                    himage = urlopen(f"https://images.fotmob.com/image_resources/logo/teamlogo/{ftmb_tid}.png")
-                    himage = Image.open(himage)
-                    ax_himage = add_image(himage, fig, left=0.025, bottom=0.99, width=0.15, height=0.15)
-                except Exception:
-                    pass
-
-            plt.tight_layout()
-            st.pyplot(fig)
+#         elif view_mode == "Team Pressing Heatmap":
+#             st.subheader(f"{selected_team_name} Pressing Heatmap")
+#             show_numbers = st.toggle('show numbers', value=True)
+# 
+#             # Load custom fonts
+#             try:
+#                 font_bold = font_manager.FontProperties(fname=os.path.abspath('Boldonse-Regular.ttf'))
+#                 font_regular = font_manager.FontProperties(fname=os.path.abspath('NotoSans_Condensed-Regular.ttf'))
+#             except Exception as e:
+#                 font_bold = None
+#                 font_regular = None
+# 
+#             league_clean = str(st.session_state.selected_event_league).replace(" ", "_").replace("/", "_")
+#             season_clean = str(st.session_state.selected_season).replace(" ", "_").replace("/", "_")
+#             league_csv = f"{league_clean}_{season_clean}_zonewise_pressing.csv"
+#         
+#             if os.path.exists(league_csv):
+#                 fig = plt.figure(figsize=(10, 11))
+#                 from matplotlib.gridspec import GridSpec
+#                 gs = GridSpec(2, 3, figure=fig, height_ratios=[120, 12], width_ratios=[20, 80, 20], hspace=0, wspace=0)
+#                 ax_left = fig.add_subplot(gs[0, 0])
+#                 ax_pitch = fig.add_subplot(gs[0, 1])
+#                 ax_bottom = fig.add_subplot(gs[1, 1])
+#                 ax_right = fig.add_subplot(gs[0, 2])
+#             
+#                 import matplotlib.lines as mlines
+#                 team_line = mlines.Line2D([], [], color='#E452FF', marker='o', mfc='white', lw=2, label=selected_team_name)
+#                 avg_line = mlines.Line2D([], [], color='#808080', marker='o', mfc='white', lw=2, label='League Average')
+#                 legend_font = font_manager.FontProperties(fname=os.path.abspath('NotoSans_Condensed-Regular.ttf'), size=14) if font_regular else {'size': 20}
+#                 fig.legend(handles=[team_line, avg_line], loc='lower left', bbox_to_anchor=(0.01, 0.025), prop=legend_font, frameon=False)
+#             else:
+#                 fig, ax_pitch = plt.subplots(figsize=(8, 10))
+#                 ax_left = None
+#                 ax_bottom = None
+#                 ax_right = None
+# 
+#             ftmb_tid = team_pressing_viz(st.session_state.df, selected_team_name, st.session_state.df_teamNameId, ax_pitch, ax_left, ax_bottom, ax_right, league_csv if os.path.exists(league_csv) else None, show_numbers=show_numbers)
+# 
+#             fig.text(0.2, 1.09, f'{selected_team_name} Pressing Heatmap', fontproperties=font_bold, fontsize=18)
+#             fig.text(0.2, 1.06, f'Number of Pressing actions per zone of the pitch, in top 5 Leagues {st.session_state.selected_season} season', 
+#                     color='#0f0f0f', fontsize=18, ha='left', fontproperties=font_regular)
+#             fig.text(0.2, 1.03, f'Data: Statsbomb | Made by: @adnaaan433 | Design: @gusfop', 
+#                     color='#0f0f0f', fontsize=18, ha='left', fontproperties=font_regular)
+# 
+#             if ftmb_tid:
+#                 try:
+#                     himage = urlopen(f"https://images.fotmob.com/image_resources/logo/teamlogo/{ftmb_tid}.png")
+#                     himage = Image.open(himage)
+#                     ax_himage = add_image(himage, fig, left=0.025, bottom=0.99, width=0.15, height=0.15)
+#                 except Exception:
+#                     pass
+# 
+#             plt.tight_layout()
+#             st.pyplot(fig)
 
         else:
             st.write("Please select the competition, season, and team, then click Load Team Data.")
