@@ -211,7 +211,8 @@ if page == "Dashboard":
             with col1:
                 position_choice = st.selectbox("Select position filter", ['CF', 'Winger', 'AM/CM', 'DM', 'FB', 'CB', 'GK'], index=0)
             with col2:
-                minimum_minutes_choice = st.slider("Minimum minutes played", min_value=0, max_value=2000, value=500, step=100)
+                minutes_range = st.slider("Minutes played range", min_value=0, max_value=5000, value=(1000, 2000), step=100)
+                min_minutes_choice, max_minutes_choice = minutes_range
         
             possession_adjusted = st.toggle("Possession Adjusted Calculations", value=True)
             
@@ -220,7 +221,7 @@ if page == "Dashboard":
                 show_padj_stats_text = st.toggle("Show Possession Adjusted Stats in text", value=True)
         
             # Apply filters to raw data
-            filtered_pdf = filter_player_stats(st.session_state.pdf_raw, minimum_minutes_choice, position_choice)
+            filtered_pdf = filter_player_stats(st.session_state.pdf_raw, min_minutes_choice, position_choice, max_minutes=max_minutes_choice)
         
             if filtered_pdf.empty:
                 st.warning("No players found with these filters.")
@@ -230,7 +231,8 @@ if page == "Dashboard":
             
                 # Store selections for text
                 st.session_state.position_choice = position_choice
-                st.session_state.minimum_minutes_choice = minimum_minutes_choice
+                st.session_state.minimum_minutes_choice = min_minutes_choice
+                st.session_state.maximum_minutes_choice = max_minutes_choice
             
                 st.divider()
 
@@ -262,7 +264,7 @@ if page == "Dashboard":
                     league_label = selected_league_names[0]
                 else:
                     league_label = st.session_state.selected_league
-                fig.text(0.24, 1.02, f'Percentile among {league_label} {st.session_state.position_choice}s with {st.session_state.minimum_minutes_choice}+ minutes played | Made by: @adnaaan433', color='#202020', fontsize=15, fontproperties=font_regular)
+                fig.text(0.24, 1.02, f'Percentile among {league_label} {st.session_state.position_choice}s with {st.session_state.minimum_minutes_choice}–{st.session_state.maximum_minutes_choice} minutes played | Made by: @adnaaan433', color='#202020', fontsize=15, fontproperties=font_regular)
             
                 if ftmb_tid:
                     try:
@@ -362,7 +364,7 @@ if page == "Dashboard":
                     median_y = display_df_scatter[y_axis].median()
                     
                     scatter_title = f"{x_axis.replace('_', ' ').title()} vs {y_axis.replace('_', ' ').title()}"
-                    scatter_subtitle = f"{st.session_state.position_choice}s with {st.session_state.minimum_minutes_choice}+ minutes in {league_label} {st.session_state.selected_season} season  |  Data: Statsbomb  |  made by: @adnaaan433"
+                    scatter_subtitle = f"{st.session_state.position_choice}s with {st.session_state.minimum_minutes_choice}–{st.session_state.maximum_minutes_choice} minutes in {league_label} {st.session_state.selected_season} season  |  Data: Statsbomb  |  made by: @adnaaan433"
                     
                     fig_scatter = px.scatter(
                         display_df_scatter, 

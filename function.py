@@ -144,7 +144,7 @@ def fetch_player_stats(season_id, competition_id, username=None, password=None):
             ]]
     return pdf
 
-def filter_player_stats(pdf, minimum_minutes, position_filter):
+def filter_player_stats(pdf, minimum_minutes, position_filter, max_minutes=None):
     if position_filter == 'CF':
         pf = ['Centre Forward', 'Left Centre Forward', 'Right Centre Forward', 'Secondary Striker']
     elif position_filter == 'Winger':
@@ -161,8 +161,12 @@ def filter_player_stats(pdf, minimum_minutes, position_filter):
         pf = ['Goalkeeper']
     else:
         pf = []
-        
-    pdf_filtered = pdf[(pdf.minutes >= minimum_minutes) & (pdf.primary_position.isin(pf))].copy()
+
+    minutes_mask = pdf.minutes >= minimum_minutes
+    if max_minutes is not None:
+        minutes_mask = minutes_mask & (pdf.minutes <= max_minutes)
+
+    pdf_filtered = pdf[minutes_mask & (pdf.primary_position.isin(pf))].copy()
     return pdf_filtered
 
 @st.cache_data(show_spinner=False)
