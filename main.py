@@ -211,7 +211,7 @@ if page == "Dashboard":
             with col1:
                 position_choice = st.selectbox("Select position filter", ['CF', 'Winger', 'AM/CM', 'DM', 'FB', 'CB', 'GK'], index=0)
             with col2:
-                minutes_range = st.slider("Minutes played range", min_value=0, max_value=5000, value=(1000, 2000), step=100)
+                minutes_range = st.slider("Minutes played range", min_value=0, max_value=5000, value=(1000, 5000), step=100)
                 min_minutes_choice, max_minutes_choice = minutes_range
         
             possession_adjusted = st.toggle("Possession Adjusted Calculations", value=True)
@@ -264,7 +264,8 @@ if page == "Dashboard":
                     league_label = selected_league_names[0]
                 else:
                     league_label = st.session_state.selected_league
-                fig.text(0.24, 1.02, f'Percentile among {league_label} {st.session_state.position_choice}s with {st.session_state.minimum_minutes_choice}–{st.session_state.maximum_minutes_choice} minutes played | Made by: @adnaaan433', color='#202020', fontsize=15, fontproperties=font_regular)
+                minutes_label = f"{st.session_state.minimum_minutes_choice}+ minutes played" if st.session_state.maximum_minutes_choice == 5000 else f"{st.session_state.minimum_minutes_choice}\u2013{st.session_state.maximum_minutes_choice} minutes played"
+                fig.text(0.24, 1.02, f'Percentile among {league_label} {st.session_state.position_choice}s with {minutes_label} | Made by: @adnaaan433', color='#202020', fontsize=15, fontproperties=font_regular)
             
                 if ftmb_tid:
                     try:
@@ -298,148 +299,7 @@ if page == "Dashboard":
                 display_df = st.session_state.pdf.sort_values(by='overall_percentile', ascending=False).reset_index(drop=True)
                 st.dataframe(display_df, use_container_width=True)
 
-                st.divider()
-                col_title, col_clear = st.columns([3, 1])
-                with col_title:
-                    st.subheader("Compare Players Scatter Plot")
-                with col_clear:
-                    st.write("") # Spacing
-                    if st.button("Clear Selections"):
-                        if 'accumulated_players' in st.session_state:
-                            st.session_state.accumulated_players.clear()
-                        if 'last_scatter_click' in st.session_state:
-                            st.session_state.last_scatter_click = None
-                            
-                stats_options = [
-                    'defensive_actions_90', 'defensive_action_regains_90', 
-                    'pressures_90', 'pressure_regains_90', 
-                    'counterpressures_90', 'counterpressure_regains_90',
-                    'pressured_passing_ratio'
-                ]
-                
-                # Check if all options exist in the dataframe to avoid errors
-                available_options = [opt for opt in stats_options if opt in display_df.columns]
-                
-                if len(available_options) >= 2:
-                    col_x, col_y = st.columns(2)
-                    with col_x:
-                        x_axis = st.selectbox("Select X-axis Stat", available_options, index=0)
-                    with col_y:
-                        y_axis = st.selectbox("Select Y-axis Stat", available_options, index=1)
-                    
-                    import plotly.express as px
-                    
-                    if 'accumulated_players' not in st.session_state:
-                        st.session_state.accumulated_players = set()
-                    if 'last_scatter_click' not in st.session_state:
-                        st.session_state.last_scatter_click = None
-                        
-                    # Check clicked players from session state
-                    sel = st.session_state.get("scatter_click")
-                    if sel != st.session_state.last_scatter_click:
-                        st.session_state.last_scatter_click = sel
-                        if sel and "selection" in sel and sel["selection"]["points"]:
-                            for pt in sel["selection"]["points"]:
-                                p_name = None
-                                if "customdata" in pt and len(pt["customdata"]) > 0:
-                                    p_name = pt["customdata"][0]
-                                elif "hovertext" in pt:
-                                    p_name = pt["hovertext"]
-                                    
-                                if p_name:
-                                    if p_name in st.session_state.accumulated_players:
-                                        st.session_state.accumulated_players.remove(p_name)
-                                    else:
-                                        st.session_state.accumulated_players.add(p_name)
 
-                    display_df_scatter = display_df.copy()
-                    if st.session_state.accumulated_players:
-                        display_df_scatter['is_selected'] = display_df_scatter['player_name'].isin(st.session_state.accumulated_players).astype(str)
-                    else:
-                        display_df_scatter['is_selected'] = "False"
-                        
-                    display_df_scatter = display_df_scatter.sort_values('is_selected')
-                    
-                    median_x = display_df_scatter[x_axis].median()
-                    median_y = display_df_scatter[y_axis].median()
-                    
-                    scatter_title = f"{x_axis.replace('_', ' ').title()} vs {y_axis.replace('_', ' ').title()}"
-                    scatter_subtitle = f"{st.session_state.position_choice}s with {st.session_state.minimum_minutes_choice}–{st.session_state.maximum_minutes_choice} minutes in {league_label} {st.session_state.selected_season} season  |  Data: Statsbomb  |  made by: @adnaaan433"
-                    
-                    fig_scatter = px.scatter(
-                        display_df_scatter, 
-                        x=x_axis, 
-                        y=y_axis, 
-                        hover_name="player_name",
-                        hover_data=["team_name", "minutes"],
-                        custom_data=["player_name"],
-                        color="is_selected",
-                        color_discrete_map={"True": "#E452FF", "False": "#5A5A5A"},
-                        title=f"{scatter_title}<br><sup style='color:gray'>{scatter_subtitle}</sup>"
-                    )
-                    fig_scatter.update_traces(marker=dict(size=8, opacity=0.6))
-                    fig_scatter.for_each_trace(lambda t: t.update(marker=dict(size=10, opacity=1.0, line=dict(width=2, color='white'))) if t.name == "True" else None)
-                    
-                    if st.session_state.accumulated_players:
-                        for p_name in st.session_state.accumulated_players:
-                            if p_name in display_df_scatter['player_name'].values:
-                                clicked_row = display_df_scatter[display_df_scatter['player_name'] == p_name].iloc[0]
-                                
-                                # Use player_known_name if available, else player_name
-                                display_name = clicked_row['player_known_name'] if pd.notna(clicked_row['player_known_name']) else clicked_row['player_name']
-                                
-                                # Format the annotation text
-                                annotation_text = f"{display_name}"
-                                
-                                fig_scatter.add_annotation(
-                                    x=clicked_row[x_axis], y=clicked_row[y_axis],
-                                    text=annotation_text,
-                                    showarrow=False,
-                                    yshift=15,
-                                    align="center",
-                                    font=dict(color="white", size=10)
-                                )
-
-                    # Add median lines
-                    fig_scatter.add_vline(x=median_x, line_dash="dash", line_color="rgba(128, 128, 128, 0.8)")
-                    fig_scatter.add_hline(y=median_y, line_dash="dash", line_color="rgba(128, 128, 128, 0.8)")
-                    
-                    fig_scatter.update_layout(
-                        showlegend=False,
-                        width=800,
-                        height=800,
-                        clickmode='event+select'
-                    )
-                    
-                    # Very low opacity grid
-                    fig_scatter.update_xaxes(
-                        showgrid=True,
-                        gridcolor="rgba(128, 128, 128, 0.1)",
-                        zerolinecolor="rgba(128, 128, 128, 0.1)",
-                    )
-                    fig_scatter.update_yaxes(
-                        showgrid=True,
-                        gridcolor="rgba(128, 128, 128, 0.1)",
-                        zerolinecolor="rgba(128, 128, 128, 0.1)",
-                    )
-                    
-                    st.plotly_chart(
-                        fig_scatter, 
-                        use_container_width=False, 
-                        on_select="rerun", 
-                        selection_mode=("points", "box", "lasso"), 
-                        key="scatter_click",
-                        config={
-                            'displayModeBar': True,
-                            'toImageButtonOptions': {
-                                'format': 'png',
-                                'filename': 'player_comparison_scatter',
-                                'height': 800,
-                                'width': 800,
-                                'scale': 2
-                            }
-                        }
-                    )
 
 #         elif view_mode == "Team Pressing Heatmap":
 #             st.subheader(f"{selected_team_name} Pressing Heatmap")
