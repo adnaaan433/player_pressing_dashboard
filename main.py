@@ -211,7 +211,7 @@ if page == "Dashboard":
             with col1:
                 position_choice = st.selectbox("Select position filter", ['CF', 'Winger', 'AM/CM', 'DM', 'FB', 'CB', 'GK'], index=0)
             with col2:
-                minutes_range = st.slider("Minutes played range", min_value=0, max_value=5000, value=(1000, 5000), step=100)
+                minutes_range = st.slider("Minutes played range", min_value=0, max_value=5000, value=(1200, 5000), step=100)
                 min_minutes_choice, max_minutes_choice = minutes_range
         
             possession_adjusted = st.toggle("Possession Adjusted Calculations", value=True)
