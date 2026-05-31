@@ -145,28 +145,30 @@ def fetch_player_stats(season_id, competition_id, username=None, password=None):
     return pdf
 
 def filter_player_stats(pdf, minimum_minutes, position_filter, max_minutes=None):
-    if position_filter == 'CF':
-        pf = ['Centre Forward', 'Left Centre Forward', 'Right Centre Forward', 'Secondary Striker']
-    elif position_filter == 'Winger':
-        pf = ['Left Wing', 'Right Wing', 'Right Attacking Midfielder', 'Left Attacking Midfielder', 'Left Midfielder', 'Right Midfielder']
-    elif position_filter == 'AM/CM':
-        pf = ['Centre Attacking Midfielder', 'Centre Midfielder', 'Left Centre Midfielder', 'Right Centre Midfielder']
-    elif position_filter == 'DM':
-        pf = ['Centre Defensive Midfielder', 'Left Defensive Midfielder', 'Right Defensive Midfielder']
-    elif position_filter == 'FB':
-        pf = ['Left Back', 'Right Back', 'Left Wing Back', 'Right Wing Back']
-    elif position_filter == 'CB':
-        pf = ['Left Centre Back', 'Right Centre Back', 'Centre Back']
-    elif position_filter == 'GK':
-        pf = ['Goalkeeper']
-    else:
-        pf = []
-
     minutes_mask = pdf.minutes >= minimum_minutes
     if max_minutes is not None:
         minutes_mask = minutes_mask & (pdf.minutes <= max_minutes)
 
-    pdf_filtered = pdf[minutes_mask & (pdf.primary_position.isin(pf))].copy()
+    if position_filter == 'All':
+        pdf_filtered = pdf[minutes_mask].copy()
+    else:
+        if position_filter == 'CF':
+            pf = ['Centre Forward', 'Left Centre Forward', 'Right Centre Forward', 'Secondary Striker']
+        elif position_filter == 'Winger':
+            pf = ['Left Wing', 'Right Wing', 'Right Attacking Midfielder', 'Left Attacking Midfielder', 'Left Midfielder', 'Right Midfielder']
+        elif position_filter == 'AM/CM':
+            pf = ['Centre Attacking Midfielder', 'Centre Midfielder', 'Left Centre Midfielder', 'Right Centre Midfielder']
+        elif position_filter == 'DM':
+            pf = ['Centre Defensive Midfielder', 'Left Defensive Midfielder', 'Right Defensive Midfielder']
+        elif position_filter == 'FB':
+            pf = ['Left Back', 'Right Back', 'Left Wing Back', 'Right Wing Back']
+        elif position_filter == 'CB':
+            pf = ['Left Centre Back', 'Right Centre Back', 'Centre Back']
+        elif position_filter == 'GK':
+            pf = ['Goalkeeper']
+        else:
+            pf = []
+        pdf_filtered = pdf[minutes_mask & (pdf.primary_position.isin(pf))].copy()
     return pdf_filtered
 
 @st.cache_data(show_spinner=False)

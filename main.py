@@ -209,7 +209,7 @@ if page == "Dashboard":
             col1, col2 = st.columns(2)
         
             with col1:
-                position_choice = st.selectbox("Select position filter", ['CF', 'Winger', 'AM/CM', 'DM', 'FB', 'CB', 'GK'], index=0)
+                position_choice = st.selectbox("Select position filter", ['All', 'CF', 'Winger', 'AM/CM', 'DM', 'FB', 'CB', 'GK'], index=0)
             with col2:
                 minutes_range = st.slider("Minutes played range", min_value=0, max_value=5000, value=(1000, 5000), step=100)
                 min_minutes_choice, max_minutes_choice = minutes_range
@@ -265,7 +265,8 @@ if page == "Dashboard":
                 else:
                     league_label = st.session_state.selected_league
                 minutes_label = f"{st.session_state.minimum_minutes_choice}+ minutes played" if st.session_state.maximum_minutes_choice == 5000 else f"{st.session_state.minimum_minutes_choice}\u2013{st.session_state.maximum_minutes_choice} minutes played"
-                fig.text(0.24, 1.02, f'Percentile among {league_label} {st.session_state.position_choice}s with {minutes_label} | Made by: @adnaaan433', color='#202020', fontsize=15, fontproperties=font_regular)
+                position_label = 'Players' if st.session_state.position_choice == 'All' else f'{st.session_state.position_choice}s'
+                fig.text(0.24, 1.02, f'Percentile among {league_label} {position_label} with {minutes_label} | Made by: @adnaaan433', color='#202020', fontsize=15, fontproperties=font_regular)
             
                 if ftmb_tid:
                     try:
@@ -294,7 +295,8 @@ if page == "Dashboard":
                 st.pyplot(fig)
                 st.text(f"Minutes played: {pltime}")
 
-                st.subheader(f"Overall Percentiles: Top 5 Leagues {st.session_state.position_choice}")
+                subheader_pos_label = 'All Players' if st.session_state.position_choice == 'All' else st.session_state.position_choice
+                st.subheader(f"Overall Percentiles: Top 5 Leagues {subheader_pos_label}")
                 # Print the dataframe, ranked by the newly computed overall percentile
                 display_df = st.session_state.pdf.sort_values(by='overall_percentile', ascending=False).reset_index(drop=True)
                 st.dataframe(display_df, use_container_width=True)
