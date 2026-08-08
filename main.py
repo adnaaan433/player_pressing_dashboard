@@ -54,10 +54,11 @@ page = "Dashboard"
 #     st.write("Download entire season data for all teams and calculate zonewise stats.")
 #     
 #     competitions_df = get_competitions()
-#     competition_names = competitions_df['competition_name'].unique()
+#     competitions_df['competition_display'] = competitions_df['competition_name'] + " (" + competitions_df['country_name'] + ")"
+#     competition_names = competitions_df['competition_display'].unique()
 #     selected_league_name = st.selectbox("Select competition", competition_names, index=0, key="dl_comp")
 #     
-#     seasons_df = competitions_df[competitions_df['competition_name'] == selected_league_name]
+#     seasons_df = competitions_df[competitions_df['competition_display'] == selected_league_name]
 #     season_names = seasons_df['season_name'].unique()
 #     selected_season_name = st.selectbox("Select season", season_names, index=0, key="dl_seas")
 #     
@@ -93,17 +94,23 @@ if page == "Dashboard":
 
     # Fetch available competitions dynamically
     competitions_df = get_competitions()
+    competitions_df['competition_display'] = competitions_df['competition_name'] + " (" + competitions_df['country_name'] + ")"
 
     # Select Competition(s)
-    competition_names = competitions_df['competition_name'].unique()
-    selected_league_names = st.multiselect("Select competition(s)", competition_names, default=[competition_names[0]])
+    competition_displays = competitions_df['competition_display'].unique()
+    top_5_defaults = ['Bundesliga (Germany)', 'La Liga (Spain)', 'Ligue 1 (France)', 'Premier League (England)', 'Serie A (Italy)']
+    default_leagues = [c for c in top_5_defaults if c in competition_displays]
+    if not default_leagues and len(competition_displays) > 0:
+        default_leagues = [competition_displays[0]]
 
-    if not selected_league_names:
+    selected_league_displays = st.multiselect("Select competition(s)", competition_displays, default=default_leagues)
+
+    if not selected_league_displays:
         st.warning("Please select at least one competition.")
         st.stop()
 
     # Filter for seasons based on selected competitions
-    seasons_df = competitions_df[competitions_df['competition_name'].isin(selected_league_names)]
+    seasons_df = competitions_df[competitions_df['competition_display'].isin(selected_league_displays)]
     season_names = seasons_df['season_name'].unique()
     selected_season_name = st.selectbox("Select season", season_names, index=0)
 
@@ -187,7 +194,10 @@ if page == "Dashboard":
     
         # Store Context
         st.session_state.df_teamNameId = pd.read_csv("teams_name_and_id_Statsbomb_Names.csv")
-        st.session_state.selected_league = ", ".join(selected_league_names) if len(selected_league_names) <= 2 else "Multiple Competitions"
+        selected_raw_league_names = list(dict.fromkeys(selected_rows['competition_name'].tolist()))
+        st.session_state.selected_league = ", ".join(selected_raw_league_names) if len(selected_raw_league_names) <= 2 else "Multiple Competitions"
+        st.session_state.selected_display_leagues = selected_league_displays
+        st.session_state.selected_raw_leagues = selected_raw_league_names
         st.session_state.selected_event_league = event_comp_name
         st.session_state.selected_season = selected_season_name
         st.session_state.selected_team_name = selected_team_name
@@ -257,11 +267,13 @@ if page == "Dashboard":
             
                 # Subtitles - NotoSans
                 fig.text(0.24, 1.06, f'Off the ball workrate, for {st.session_state.selected_team_name} in {st.session_state.selected_season} season | Data: Statsbomb', color='#0f0f0f', fontsize=15, fontproperties=font_regular)
-                top_5 = {'1. Bundesliga', 'La Liga', 'Premier League', 'Serie A', 'Ligue 1'}
-                if set(selected_league_names) == top_5:
+                top_5_displays = {'Bundesliga (Germany)', 'La Liga (Spain)', 'Premier League (England)', 'Serie A (Italy)', 'Ligue 1 (France)'}
+                selected_displays = set(st.session_state.get('selected_display_leagues', selected_league_displays))
+                selected_raw_list = st.session_state.get('selected_raw_leagues', list(dict.fromkeys(selected_rows['competition_name'].tolist())))
+                if selected_displays == top_5_displays:
                     league_label = 'Top 5 Leagues'
-                elif len(selected_league_names) == 1:
-                    league_label = selected_league_names[0]
+                elif len(selected_raw_list) == 1:
+                    league_label = selected_raw_list[0]
                 else:
                     league_label = st.session_state.selected_league
                 minutes_label = f"{st.session_state.minimum_minutes_choice}+ minutes played" if st.session_state.maximum_minutes_choice == 5000 else f"{st.session_state.minimum_minutes_choice}\u2013{st.session_state.maximum_minutes_choice} minutes played"
@@ -296,7 +308,7 @@ if page == "Dashboard":
                 st.text(f"Minutes played: {pltime}")
 
                 subheader_pos_label = 'All Players' if st.session_state.position_choice == 'All' else st.session_state.position_choice
-                st.subheader(f"Overall Percentiles: Top 5 Leagues {subheader_pos_label}")
+                st.subheader(f"Overall Percentiles: {league_label} {subheader_pos_label}")
                 # Print the dataframe, ranked by the newly computed overall percentile
                 display_df = st.session_state.pdf.sort_values(by='overall_percentile', ascending=False).reset_index(drop=True)
                 st.dataframe(display_df, use_container_width=True)
