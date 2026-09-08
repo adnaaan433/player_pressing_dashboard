@@ -4,6 +4,6 @@ matplotlib
 mplsoccer
 requests
 highlight-text
-Pillow
-streamlit==1.39.0
+Pillow>=11.0.0
+streamlit
 plotly
